@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DeepSeek Harness 桌面端（Electron 套壳本地 dsh web）",
   "main": "main.js",
   "author": "DSH",
@@ -28,7 +28,7 @@
       "assets/**"
     ],
     "win": {
-      "target": ["nsis", "portable"],
+      "target": ["nsis"],
       "icon": "assets/icon.png",
       "signAndEditExecutable": false
     },
