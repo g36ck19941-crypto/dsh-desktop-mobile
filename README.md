@@ -59,3 +59,11 @@ DeepSeek Harness（DSH）的桌面端（Windows）和手机端（Android）应�
 ## 四、远程遥控
 
 手机远程连接电脑的完整说明见 [远程遥控说明.md](远程遥控说明.md)。
+
+---
+
+## 五、版本与许可证
+
+- **当前版本**：v0.1.0
+- **版本规范**：遵循[语义化版本](https://semver.org/lang/zh-CN/)，变更记录见 [CHANGELOG.md](CHANGELOG.md)
+- **许可证**：[MIT](LICENSE)
