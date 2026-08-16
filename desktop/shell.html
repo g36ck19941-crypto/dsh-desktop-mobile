@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; frame-src http://127.0.0.1:* http://localhost:*;">
+<title>DSH 工作台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #151517; color: #e8ebf0; font-family: 'Segoe UI','Microsoft YaHei',sans-serif; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  #statusbar {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 12px; color: #9aa3b2;
+  }
+  #dot { width: 9px; height: 9px; border-radius: 50%; background: #f0b429; }
+  #dot.ready { background: #22c55e; }
+  #dot.error { background: #ef4444; }
+  #frame { flex: 1 1 auto; border: none; background: #151517; }
+  #logwrap {
+    display: none; flex-direction: column; height: 220px; border-top: 1px solid #2a2b31; background: #101114;
+  }
+  #logwrap.open { display: flex; }
+  #loghead { display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; font-size: 12px; color: #9aa3b2; background: #1e1f24; }
+  #loghead button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+  #log { flex: 1; overflow: auto; padding: 8px 12px; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: #c9d1e0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="statusbar">
+    <span id="dot"></span>
+    <span id="statustext">正在启动…</span>
+    <span style="flex:1"></span>
+    <button id="logbtn" style="background:#2a2b31;color:#c9d1e0;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;">日志</button>
+  </div>
+  <iframe id="frame" src="http://127.0.0.1:3080"></iframe>
+  <div id="logwrap">
+    <div id="loghead"><span>服务日志</span><span><button id="clearbtn">清空</button> <button id="closebtn">收起</button></span></div>
+    <div id="log"></div>
+  </div>
+</div>
+<script>
+  const dot = document.getElementById('dot');
+  const text = document.getElementById('statustext');
+  const frame = document.getElementById('frame');
+  const logEl = document.getElementById('log');
+  const logwrap = document.getElementById('logwrap');
+  const logbtn = document.getElementById('logbtn');
+
+  function setStatus(s) {
+    const map = { starting: ['#f0b429', '正在启动…'], ready: ['#22c55e', '已就绪'], error: ['#ef4444', '启动失败'], stopped: ['#ef4444', '已停止'] };
+    const [color, label] = map[s] || ['#f0b429', s];
+    dot.style.background = color; dot.className = '';
+    if (s === 'ready') dot.className = 'ready';
+    if (s === 'error') dot.className = 'error';
+    text.textContent = label;
+    if (s === 'ready') { frame.style.display = ''; if (!frameReady) { frameReady = true; frame.src = 'http://127.0.0.1:3080'; } }
+    else { frameReady = false; }
+  }
+  let frameReady = false;
+
+  function appendLog(msg) {
+    logEl.textContent += msg;
+    logEl.scrollTop = logEl.scrollHeight;
+    // 限制日志量，避免内存无限增长
+    if (logEl.textContent.length > 200000) logEl.textContent = logEl.textContent.slice(-100000);
+  }
+
+  window.dshDesktop.onLog(appendLog);
+  window.dshDesktop.onStatus(setStatus);
+  window.dshDesktop.getStatus().then(setStatus);
+
+  logbtn.onclick = () => logwrap.classList.toggle('open');
+  document.getElementById('closebtn').onclick = () => logwrap.classList.remove('open');
+  document.getElementById('clearbtn').onclick = () => { logEl.textContent = ''; };
+
+  // 服务就绪后，iframe 会自动加载 http://127.0.0.1:3080
+</script>
+</body>
+</html>

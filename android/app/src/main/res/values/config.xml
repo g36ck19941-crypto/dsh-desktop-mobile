@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="default_server">http://192.168.110.61:3080</string>
+</resources>

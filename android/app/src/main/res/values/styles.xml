@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="Theme.DSH" parent="@android:style/Theme.Material">
+    <item name="android:colorPrimary">#4176E6</item>
+    <item name="android:colorPrimaryDark">#151517</item>
+    <item name="android:windowBackground">@color/dsh_bg</item>
+    <item name="android:statusBarColor">@color/dsh_bg</item>
+    <item name="android:navigationBarColor">@color/dsh_bg</item>
+  </style>
+</resources>
