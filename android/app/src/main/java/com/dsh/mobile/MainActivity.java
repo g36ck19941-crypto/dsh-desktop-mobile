@@ -27,7 +27,9 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -55,8 +57,11 @@ public class MainActivity extends Activity {
   private LinearLayout root;
   private Button btnStandalone;
   private Button btnRemote;
+  private Button btnPlatform;
   private LinearLayout chatView;
   private LinearLayout remoteView;
+  private LinearLayout platformView;
+  private WebView platformWeb;
   private ListView chatList;
   private EditText chatInput;
   private WebView web;
@@ -79,7 +84,7 @@ public class MainActivity extends Activity {
 
   private static class Msg {
     final String role;
-    final String content;
+    String content;
     Msg(String role, String content) { this.role = role; this.content = content; }
   }
 
@@ -89,7 +94,7 @@ public class MainActivity extends Activity {
     prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     buildUi();
-    switchTo(true); // 默认独立对话
+    switchTo(0); // 默认独立对话
   }
 
   // ─────────────────── UI ───────────────────
@@ -102,25 +107,29 @@ public class MainActivity extends Activity {
     LinearLayout bar = new LinearLayout(this);
     bar.setOrientation(LinearLayout.HORIZONTAL);
     bar.setPadding(8, 8, 8, 8);
-    btnStandalone = makeTab("独立对话");
-    btnRemote = makeTab("远程桌面");
+    btnStandalone = makeTab("独立对话", 0);
+    btnRemote = makeTab("远程桌面", 1);
+    btnPlatform = makeTab("开放平台", 2);
     bar.addView(btnStandalone, new LinearLayout.LayoutParams(0, dp(44), 1));
     bar.addView(btnRemote, new LinearLayout.LayoutParams(0, dp(44), 1));
+    bar.addView(btnPlatform, new LinearLayout.LayoutParams(0, dp(44), 1));
     root.addView(bar);
 
     buildChatView();
     buildRemoteView();
+    buildPlatformView();
 
     // 内容容器
     FrameLayout container = new FrameLayout(this);
     container.addView(chatView, match());
     container.addView(remoteView, match());
+    container.addView(platformView, match());
     root.addView(container, new LinearLayout.LayoutParams(match(), 0, 1));
 
     setContentView(root);
   }
 
-  private Button makeTab(String label) {
+  private Button makeTab(String label, final int mode) {
     Button b = new Button(this);
     b.setText(label);
     b.setAllCaps(false);
@@ -130,7 +139,7 @@ public class MainActivity extends Activity {
     lp.setMargins(4, 0, 4, 0);
     b.setLayoutParams(lp);
     b.setGravity(Gravity.CENTER);
-    b.setOnClickListener(v -> switchTo(v == btnStandalone));
+    b.setOnClickListener(v -> switchTo(mode));
     return b;
   }
 
@@ -198,16 +207,36 @@ public class MainActivity extends Activity {
     ((LinearLayout) remoteView).addView(web, new LinearLayout.LayoutParams(match(), 0, 1));
   }
 
+  private void buildPlatformView() {
+    platformView = new LinearLayout(this);
+    platformView.setOrientation(LinearLayout.VERTICAL);
+    platformWeb = new WebView(this);
+    platformWeb.setBackgroundColor(0xFF151517);
+    WebSettings s = platformWeb.getSettings();
+    s.setJavaScriptEnabled(true);
+    s.setDomStorageEnabled(true);
+    s.setDatabaseEnabled(true);
+    s.setLoadWithOverviewMode(true);
+    s.setUseWideViewPort(true);
+    s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+    platformWeb.setWebViewClient(new WebViewClient());
+    platformWeb.setWebChromeClient(new WebChromeClient());
+    platformWeb.loadUrl("https://platform.deepseek.com");
+    platformView.addView(platformWeb, new LinearLayout.LayoutParams(match(), 0, 1));
+  }
+
   private void inject(WebView view) {
     try { view.evaluateJavascript(POLYFILL, null); } catch (Throwable ignored) {}
   }
 
-  private void switchTo(boolean standalone) {
-    chatView.setVisibility(standalone ? View.VISIBLE : View.GONE);
-    remoteView.setVisibility(standalone ? View.GONE : View.VISIBLE);
-    styleTab(btnStandalone, standalone);
-    styleTab(btnRemote, !standalone);
-    if (!standalone) loadRemote();
+  private void switchTo(int mode) {
+    chatView.setVisibility(mode == 0 ? View.VISIBLE : View.GONE);
+    remoteView.setVisibility(mode == 1 ? View.VISIBLE : View.GONE);
+    platformView.setVisibility(mode == 2 ? View.VISIBLE : View.GONE);
+    styleTab(btnStandalone, mode == 0);
+    styleTab(btnRemote, mode == 1);
+    styleTab(btnPlatform, mode == 2);
+    if (mode == 1) loadRemote();
   }
 
   private void styleTab(Button b, boolean active) {
@@ -233,37 +262,46 @@ public class MainActivity extends Activity {
 
     busy = true;
     final List<Msg> snapshot = new ArrayList<>(messages);
-    callLlm(snapshot, new Callback() {
-      @Override public void ok(String content) {
-        busy = false;
-        messages.add(new Msg("assistant", content));
+    final Msg assistantMsg = new Msg("assistant", "");
+    messages.add(assistantMsg);
+    adapter.notifyDataSetChanged();
+
+    callLlmStream(snapshot, new StreamCallback() {
+      @Override public void onChunk(String chunk) {
+        assistantMsg.content += chunk;
         adapter.notifyDataSetChanged();
       }
-      @Override public void fail(String err) {
+      @Override public void onDone() {
         busy = false;
-        messages.add(new Msg("assistant", "⚠ " + err));
+        adapter.notifyDataSetChanged();
+      }
+      @Override public void onError(String err) {
+        busy = false;
+        if (!assistantMsg.content.isEmpty()) assistantMsg.content += "\n";
+        assistantMsg.content += "⚠ " + err;
         adapter.notifyDataSetChanged();
       }
     });
   }
 
-  private interface Callback { void ok(String content); void fail(String err); }
+  private interface StreamCallback { void onChunk(String chunk); void onDone(); void onError(String err); }
 
-  private void callLlm(final List<Msg> history, final Callback cb) {
+  private void callLlmStream(final List<Msg> history, final StreamCallback cb) {
     executor.execute(() -> {
       try {
         String base = prefs.getString(KEY_API_BASE, DEFAULT_API_BASE).trim();
         String key = prefs.getString(KEY_API_KEY, "").trim();
         String model = prefs.getString(KEY_API_MODEL, DEFAULT_API_MODEL).trim();
-        if (key.isEmpty()) { post(() -> cb.fail("未配置 API Key")); return; }
+        if (key.isEmpty()) { post(() -> cb.onError("未配置 API Key")); return; }
 
         URL url = new URL(base.replaceAll("/+$", "") + "/chat/completions");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setRequestProperty("Authorization", "Bearer " + key);
+        conn.setRequestProperty("Accept", "text/event-stream");
         conn.setConnectTimeout(20000);
-        conn.setReadTimeout(90000);
+        conn.setReadTimeout(120000);
         conn.setDoOutput(true);
 
         JSONObject body = new JSONObject();
@@ -276,25 +314,83 @@ public class MainActivity extends Activity {
           msgs.put(o);
         }
         body.put("messages", msgs);
-        body.put("stream", false);
+        body.put("stream", true);
 
         try (OutputStream os = conn.getOutputStream()) {
           os.write(body.toString().getBytes(StandardCharsets.UTF_8));
         }
 
         int code = conn.getResponseCode();
+        if (code != 200) {
+          InputStream es = conn.getErrorStream();
+          final String err = es == null ? "" : readAll(es);
+          if (es != null) es.close();
+          conn.disconnect();
+          post(() -> cb.onError("API " + code + ": " + trim(err, 200)));
+          return;
+        }
+
+        InputStream is = conn.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          if (!line.startsWith("data:")) continue;
+          String data = line.substring(5).trim();
+          if ("[DONE]".equals(data)) break;
+          try {
+            JSONObject json = new JSONObject(data);
+            JSONArray choices = json.optJSONArray("choices");
+            if (choices != null && choices.length() > 0) {
+              JSONObject ch = choices.getJSONObject(0);
+              JSONObject delta = ch.optJSONObject("delta");
+              if (delta != null) {
+                String c = delta.optString("content", "");
+                if (!c.isEmpty()) { final String cc = c; post(() -> cb.onChunk(cc)); }
+              }
+              String fr = ch.optString("finish_reason", "");
+              if (!fr.isEmpty()) break;
+            }
+          } catch (Exception ignore) {}
+        }
+        reader.close();
+        conn.disconnect();
+        post(cb::onDone);
+      } catch (Exception e) {
+        post(() -> cb.onError("请求失败: " + (e.getMessage() == null ? e.toString() : e.getMessage())));
+      }
+    });
+  }
+
+  private void refreshBalance() {
+    executor.execute(() -> {
+      try {
+        String base = prefs.getString(KEY_API_BASE, DEFAULT_API_BASE).trim();
+        String key = prefs.getString(KEY_API_KEY, "").trim();
+        if (key.isEmpty()) { post(() -> toast("请先配置 API Key")); return; }
+        URL url = new URL(base.replaceAll("/+$", "") + "/user/balance");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Authorization", "Bearer " + key);
+        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(15000);
+        int code = conn.getResponseCode();
         InputStream is = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
-        final String resp = readAll(is);
+        String resp = readAll(is);
         is.close();
         conn.disconnect();
-
-        if (code != 200) { post(() -> cb.fail("API " + code + ": " + trim(resp, 300))); return; }
-
+        if (code != 200) { post(() -> toast("余额查询失败 " + code)); return; }
         JSONObject json = new JSONObject(resp);
-        String content = json.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
-        post(() -> cb.ok(content));
+        JSONArray infos = json.optJSONArray("balance_infos");
+        double total = 0;
+        if (infos != null) {
+          for (int i = 0; i < infos.length(); i++) {
+            total += infos.getJSONObject(i).optDouble("total_balance", 0);
+          }
+        }
+        final double t = total;
+        post(() -> toast("余额: ¥" + String.format("%.2f", t)));
       } catch (Exception e) {
-        post(() -> cb.fail("请求失败: " + (e.getMessage() == null ? e.toString() : e.getMessage())));
+        post(() -> toast("余额查询失败: " + (e.getMessage() == null ? e.toString() : e.getMessage())));
       }
     });
   }
@@ -386,6 +482,7 @@ public class MainActivity extends Activity {
   public boolean onCreateOptionsMenu(android.view.Menu menu) {
     menu.add("设置");
     menu.add("刷新");
+    menu.add("查余额");
     menu.add("清空对话");
     return true;
   }
@@ -396,9 +493,11 @@ public class MainActivity extends Activity {
     if ("设置".equals(t)) { showSettings(); return true; }
     else if ("刷新".equals(t)) {
       if (chatView.getVisibility() == View.VISIBLE) { adapter.notifyDataSetChanged(); }
+      else if (platformView.getVisibility() == View.VISIBLE) { platformWeb.reload(); }
       else { loadRemote(); }
       return true;
     }
+    else if ("查余额".equals(t)) { refreshBalance(); return true; }
     else if ("清空对话".equals(t)) { messages.clear(); adapter.notifyDataSetChanged(); return true; }
     return super.onOptionsItemSelected(item);
   }

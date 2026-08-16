@@ -8,17 +8,33 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: #151517; color: #e8ebf0; font-family: 'Segoe UI','Microsoft YaHei',sans-serif; }
   #app { display: flex; flex-direction: column; height: 100vh; }
-  #statusbar {
-    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-    background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 12px; color: #9aa3b2;
-  }
+  #topbar { display: flex; align-items: center; gap: 4px; padding: 6px 10px; background: #1e1f24; border-bottom: 1px solid #2a2b31; }
+  .tab { background: transparent; color: #9aa3b2; border: none; border-radius: 6px; padding: 6px 14px; cursor: pointer; font-size: 13px; }
+  .tab.active { background: #2b3a55; color: #fff; }
+  .spacer { flex: 1; }
+  #logbtn { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+  #view-dsh { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #statusbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 12px; color: #9aa3b2; }
   #dot { width: 9px; height: 9px; border-radius: 50%; background: #f0b429; }
   #dot.ready { background: #22c55e; }
   #dot.error { background: #ef4444; }
   #frame { flex: 1 1 auto; border: none; background: #151517; }
-  #logwrap {
-    display: none; flex-direction: column; height: 220px; border-top: 1px solid #2a2b31; background: #101114;
-  }
+  #view-deepseek { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  #view-platform { display: none; flex: 1; min-height: 0; }
+  #platform-webview { flex: 1; width: 100%; height: 100%; border: none; }
+  #ds-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 13px; }
+  #ds-model { background: #2a2b31; color: #e8ebf0; border: none; border-radius: 6px; padding: 5px 8px; }
+  #ds-balance { color: #9aa3b2; }
+  #ds-refresh { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+  #ds-settings { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; margin-left: auto; }
+  #ds-messages { flex: 1 1 auto; overflow-y: auto; padding: 12px; }
+  .msg { margin-bottom: 12px; max-width: 82%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .msg.user { background: #1e2a3a; color: #e8ebf0; margin-left: auto; }
+  .msg.assistant { background: #1a1d23; color: #c9d1e0; margin-right: auto; }
+  #ds-input-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid #2a2b31; background: #1e1f24; }
+  #ds-input { flex: 1; background: #151517; color: #e8ebf0; border: 1px solid #2a2b31; border-radius: 8px; padding: 10px; font-size: 14px; resize: none; min-height: 40px; max-height: 120px; }
+  #ds-send { background: #2b3a55; color: #fff; border: none; border-radius: 8px; padding: 0 18px; cursor: pointer; font-size: 14px; }
+  #logwrap { display: none; flex-direction: column; height: 220px; border-top: 1px solid #2a2b31; background: #101114; }
   #logwrap.open { display: flex; }
   #loghead { display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; font-size: 12px; color: #9aa3b2; background: #1e1f24; }
   #loghead button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
@@ -27,13 +43,43 @@
 </head>
 <body>
 <div id="app">
-  <div id="statusbar">
-    <span id="dot"></span>
-    <span id="statustext">正在启动…</span>
-    <span style="flex:1"></span>
-    <button id="logbtn" style="background:#2a2b31;color:#c9d1e0;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;">日志</button>
+  <div id="topbar">
+    <button class="tab active" id="tab-dsh">DSH</button>
+    <button class="tab" id="tab-deepseek">DeepSeek</button>
+    <button class="tab" id="tab-platform">开放平台</button>
+    <span class="spacer"></span>
+    <button id="logbtn">日志</button>
   </div>
-  <iframe id="frame" src="http://127.0.0.1:3080"></iframe>
+
+  <div id="view-dsh">
+    <div id="statusbar">
+      <span id="dot"></span>
+      <span id="statustext">正在启动…</span>
+    </div>
+    <iframe id="frame" src="http://127.0.0.1:3080"></iframe>
+  </div>
+
+  <div id="view-deepseek">
+    <div id="ds-bar">
+      <select id="ds-model">
+        <option value="deepseek-chat">deepseek-chat</option>
+        <option value="deepseek-reasoner">deepseek-reasoner</option>
+      </select>
+      <span id="ds-balance">余额: -</span>
+      <button id="ds-refresh">查余额</button>
+      <button id="ds-settings">设置</button>
+    </div>
+    <div id="ds-messages"></div>
+    <div id="ds-input-row">
+      <textarea id="ds-input" placeholder="输入消息…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button id="ds-send">发送</button>
+    </div>
+  </div>
+
+  <div id="view-platform">
+    <webview id="platform-webview" src="https://platform.deepseek.com"></webview>
+  </div>
+
   <div id="logwrap">
     <div id="loghead"><span>服务日志</span><span><button id="clearbtn">清空</button> <button id="closebtn">收起</button></span></div>
     <div id="log"></div>
@@ -54,15 +100,14 @@
     if (s === 'ready') dot.className = 'ready';
     if (s === 'error') dot.className = 'error';
     text.textContent = label;
-    if (s === 'ready') { frame.style.display = ''; if (!frameReady) { frameReady = true; frame.src = 'http://127.0.0.1:3080'; } }
-    else { frameReady = false; }
+    if (s === 'ready' && !frameReady) { frameReady = true; frame.src = 'http://127.0.0.1:3080'; }
+    else if (s !== 'ready') { frameReady = false; }
   }
   let frameReady = false;
 
   function appendLog(msg) {
     logEl.textContent += msg;
     logEl.scrollTop = logEl.scrollHeight;
-    // 限制日志量，避免内存无限增长
     if (logEl.textContent.length > 200000) logEl.textContent = logEl.textContent.slice(-100000);
   }
 
@@ -74,7 +119,130 @@
   document.getElementById('closebtn').onclick = () => logwrap.classList.remove('open');
   document.getElementById('clearbtn').onclick = () => { logEl.textContent = ''; };
 
-  // 服务就绪后，iframe 会自动加载 http://127.0.0.1:3080
+  // ─── 标签切换 ───
+  const tabDsh = document.getElementById('tab-dsh');
+  const tabDs = document.getElementById('tab-deepseek');
+  const tabPlatform = document.getElementById('tab-platform');
+  const viewDsh = document.getElementById('view-dsh');
+  const viewDs = document.getElementById('view-deepseek');
+  const viewPlatform = document.getElementById('view-platform');
+  function switchTab(which) {
+    viewDsh.style.display = which === 'dsh' ? 'flex' : 'none';
+    viewDs.style.display = which === 'deepseek' ? 'flex' : 'none';
+    viewPlatform.style.display = which === 'platform' ? 'flex' : 'none';
+    tabDsh.classList.toggle('active', which === 'dsh');
+    tabDs.classList.toggle('active', which === 'deepseek');
+    tabPlatform.classList.toggle('active', which === 'platform');
+  }
+  tabDsh.onclick = () => switchTab('dsh');
+  tabDs.onclick = () => switchTab('deepseek');
+  tabPlatform.onclick = () => switchTab('platform');
+
+  // ─── DeepSeek ───
+  const dsModel = document.getElementById('ds-model');
+  const dsBalance = document.getElementById('ds-balance');
+  const dsMessages = document.getElementById('ds-messages');
+  const dsInput = document.getElementById('ds-input');
+  const dsSend = document.getElementById('ds-send');
+  let dsConfig = { baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat', apiKey: '' };
+  let dsHistory = [];
+  let streaming = false;
+
+  function addMsg(role, content) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = content;
+    dsMessages.appendChild(div);
+    dsMessages.scrollTop = dsMessages.scrollHeight;
+    return div;
+  }
+
+  function refreshBalance() {
+    dsBalance.textContent = '余额: 查询中…';
+    window.dshDesktop.deepseek.balance(dsConfig).then((r) => {
+      if (r && r.ok) {
+        try {
+          const infos = (r.data && r.data.balance_infos) || [];
+          const total = infos.reduce((s, x) => s + (parseFloat(x.total_balance) || 0), 0);
+          dsBalance.textContent = '余额: ¥' + total.toFixed(2);
+        } catch (e) { dsBalance.textContent = '余额: 解析失败'; }
+      } else {
+        dsBalance.textContent = '余额: ' + ((r && r.error) || '查询失败');
+      }
+    });
+  }
+
+  let streamEl = null;
+  let streamAcc = '';
+
+  window.dshDesktop.deepseek.onChunk((data) => {
+    if (data && data.content) { streamAcc += data.content; if (streamEl) { streamEl.textContent = streamAcc; dsMessages.scrollTop = dsMessages.scrollHeight; } }
+    if (data && data.done) { if (streamAcc) dsHistory.push({ role: 'assistant', content: streamAcc }); streamEl = null; streamAcc = ''; streaming = false; }
+  });
+  window.dshDesktop.deepseek.onError((msg) => {
+    if (streamEl) { streamEl.textContent = '⚠ ' + msg; }
+    streaming = false; streamEl = null; streamAcc = '';
+  });
+
+  function dsSendMessage() {
+    if (streaming) return;
+    const t = dsInput.value.trim();
+    if (!t) return;
+    if (!dsConfig.apiKey) { addMsg('assistant', '请先点右上角「设置」填写 DeepSeek API Key。'); return; }
+    dsInput.value = '';
+    addMsg('user', t);
+    dsHistory.push({ role: 'user', content: t });
+    streamEl = addMsg('assistant', '');
+    streamAcc = '';
+    streaming = true;
+    window.dshDesktop.deepseek.chat(dsConfig, dsHistory);
+  }
+
+  dsSend.onclick = dsSendMessage;
+  dsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dsSendMessage(); }
+  });
+  document.getElementById('ds-refresh').onclick = refreshBalance;
+  dsModel.onchange = () => { dsConfig.model = dsModel.value; window.dshDesktop.deepseek.setConfig(dsConfig); };
+
+  // 设置对话框
+  document.getElementById('ds-settings').onclick = () => {
+    const box = document.createElement('div');
+    box.style.cssText = 'padding:16px;display:flex;flex-direction:column;gap:8px;';
+    box.innerHTML = '<label style="font-size:12px;color:#9aa3b2;">Base URL</label>' +
+      '<input id="cfg-base" style="background:#151517;color:#e8ebf0;border:1px solid #2a2b31;border-radius:6px;padding:8px;">' +
+      '<label style="font-size:12px;color:#9aa3b2;">API Key</label>' +
+      '<input id="cfg-key" type="password" style="background:#151517;color:#e8ebf0;border:1px solid #2a2b31;border-radius:6px;padding:8px;">' +
+      '<label style="font-size:12px;color:#9aa3b2;">模型</label>' +
+      '<input id="cfg-model" style="background:#151517;color:#e8ebf0;border:1px solid #2a2b31;border-radius:6px;padding:8px;">';
+    document.getElementById('cfg-base').value = dsConfig.baseUrl;
+    document.getElementById('cfg-key').value = dsConfig.apiKey;
+    document.getElementById('cfg-model').value = dsConfig.model;
+    const dlg = document.createElement('dialog');
+    dlg.style.cssText = 'background:#1e1f24;color:#e8ebf0;border:1px solid #2a2b31;border-radius:10px;padding:0;';
+    dlg.appendChild(box);
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px;';
+    btns.innerHTML = '<button id="cfg-cancel" style="background:#2a2b31;color:#c9d1e0;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;">取消</button>' +
+      '<button id="cfg-save" style="background:#2b3a55;color:#fff;border:none;border-radius:6px;padding:7px 14px;cursor:pointer;">保存</button>';
+    box.appendChild(btns);
+    dlg.querySelector('#cfg-cancel').onclick = () => dlg.close();
+    dlg.querySelector('#cfg-save').onclick = () => {
+      dsConfig = { baseUrl: dlg.querySelector('#cfg-base').value.trim() || 'https://api.deepseek.com', apiKey: dlg.querySelector('#cfg-key').value.trim(), model: dlg.querySelector('#cfg-model').value.trim() || 'deepseek-chat' };
+      window.dshDesktop.deepseek.setConfig(dsConfig);
+      dsModel.value = dsConfig.model;
+      dlg.close();
+      refreshBalance();
+    };
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  };
+
+  // 初始加载配置
+  window.dshDesktop.deepseek.getConfig().then((cfg) => {
+    if (cfg) { dsConfig = { ...dsConfig, ...cfg }; dsModel.value = dsConfig.model || 'deepseek-chat'; }
+    if (dsConfig.apiKey) refreshBalance();
+  });
 </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, shell, nativeImage, dialog, ipcMain } = require('electron');
 const { spawn, exec, execFile } = require('child_process');
+const https = require('https');
 const net = require('net');
 const http = require('http');
 const path = require('path');
@@ -207,7 +208,8 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      spellcheck: false
+      spellcheck: false,
+      webviewTag: true
     }
   });
   ensureAndLoad();
@@ -232,6 +234,79 @@ function createTray() {
 }
 
 ipcMain.handle('dsh-get-status', () => currentStatus);
+
+// ─── DeepSeek 开放平台 ───
+const DEEPSEEK_CONFIG_PATH = path.join(os.homedir(), '.dsh', 'deepseek-config.json');
+
+function loadDeepseekConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(DEEPSEEK_CONFIG_PATH, 'utf8'));
+  } catch (e) {
+    return { baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat', apiKey: '' };
+  }
+}
+
+function saveDeepseekConfig(cfg) {
+  try {
+    fs.mkdirSync(path.dirname(DEEPSEEK_CONFIG_PATH), { recursive: true });
+    fs.writeFileSync(DEEPSEEK_CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
+    return true;
+  } catch (e) { return false; }
+}
+
+ipcMain.handle('deepseek-config-get', () => loadDeepseekConfig());
+ipcMain.handle('deepseek-config-set', (_e, cfg) => saveDeepseekConfig(cfg));
+
+ipcMain.handle('deepseek-balance', async (_e, cfg) => {
+  try {
+    const base = ((cfg && cfg.baseUrl) || 'https://api.deepseek.com').replace(/\/+$/, '');
+    const res = await fetch(base + '/user/balance', {
+      headers: { 'Authorization': 'Bearer ' + ((cfg && cfg.apiKey) || ''), 'Accept': 'application/json' }
+    });
+    return { ok: true, data: await res.json() };
+  } catch (err) { return { ok: false, error: String((err && err.message) || err) }; }
+});
+
+ipcMain.on('deepseek-chat', (event, payload) => {
+  const cfg = (payload && payload.cfg) || {};
+  const messages = (payload && payload.messages) || [];
+  const base = ((cfg.baseUrl) || 'https://api.deepseek.com').replace(/\/+$/, '');
+  const body = JSON.stringify({ model: cfg.model || 'deepseek-chat', messages: messages, stream: true });
+  const u = new URL(base + '/chat/completions');
+  const mod = u.protocol === 'https:' ? https : http;
+  const req = mod.request(u, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (cfg.apiKey || ''),
+      'Accept': 'text/event-stream'
+    }
+  }, (res) => {
+    let buf = '';
+    res.on('data', (chunk) => {
+      buf += chunk.toString('utf8');
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith('data:')) continue;
+        const data = t.slice(5).trim();
+        if (data === '[DONE]') { event.sender.send('deepseek-chunk', { done: true }); continue; }
+        try {
+          const json = JSON.parse(data);
+          const ch = json.choices && json.choices[0];
+          if (ch && ch.delta && ch.delta.content) event.sender.send('deepseek-chunk', { content: ch.delta.content });
+          if (ch && ch.finish_reason) event.sender.send('deepseek-chunk', { done: true });
+        } catch (e) {}
+      }
+    });
+    res.on('end', () => event.sender.send('deepseek-chunk', { done: true }));
+    res.on('error', () => event.sender.send('deepseek-chunk', { done: true }));
+  });
+  req.on('error', (err) => event.sender.send('deepseek-error', String((err && err.message) || err)));
+  req.write(body);
+  req.end();
+});
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
