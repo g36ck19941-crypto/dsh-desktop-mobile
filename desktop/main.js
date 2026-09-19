@@ -68,15 +68,46 @@ function trustedHostArgs() {
   return [];
 }
 
+function cmpVersion(a, b) {
+  const pa = String(a).split(/[-.]/).map((s) => (/^\d+$/.test(s) ? parseInt(s, 10) : s));
+  const pb = String(b).split(/[-.]/).map((s) => (/^\d+$/.test(s) ? parseInt(s, 10) : s));
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i], y = pb[i];
+    if (x === undefined) return -1;
+    if (y === undefined) return 1;
+    if (typeof x === 'number' && typeof y === 'number') { if (x !== y) return x < y ? -1 : 1; }
+    else { const xs = String(x), ys = String(y); if (xs !== ys) return xs < ys ? -1 : 1; }
+  }
+  return 0;
+}
+
+function dshPkgOf(dir) {
+  return path.join(process.env.LOCALAPPDATA || '', 'npm-cache', '_npx', dir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json');
+}
+
+// 找到本地缓存的 DSH，优先返回版本最新的那个（避免旧缓存遮蔽新版）
 function findDshBin() {
   const base = path.join(process.env.LOCALAPPDATA || '', 'npm-cache', '_npx');
+  let best = null, bestVer = null;
   try {
     for (const d of fs.readdirSync(base)) {
       const bin = path.join(base, d, 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js');
-      if (fs.existsSync(bin)) return bin;
+      if (!fs.existsSync(bin)) continue;
+      let v = '0.0.0';
+      try { v = (JSON.parse(fs.readFileSync(dshPkgOf(d), 'utf8'))).version || '0.0.0'; } catch (e) {}
+      if (!best || cmpVersion(v, bestVer) > 0) { best = bin; bestVer = v; }
     }
   } catch (e) {}
-  return null;
+  return best;
+}
+
+function getLocalDshVersion() {
+  const bin = findDshBin();
+  if (!bin) return null;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(path.dirname(bin), '..', 'package.json'), 'utf8'));
+    return pkg.version || null;
+  } catch (e) { return null; }
 }
 
 function findTailscale() {
@@ -306,6 +337,132 @@ ipcMain.on('deepseek-chat', (event, payload) => {
   req.on('error', (err) => event.sender.send('deepseek-error', String((err && err.message) || err)));
   req.write(body);
   req.end();
+});
+
+// ─── 个人面板：消耗查询（token 用量 + 金额，峰谷/缓存命中拆分） ───
+const USAGE_PRICES_PATH = path.join(os.homedir(), '.dsh', 'usage-prices.json');
+
+// 用系统 Node(>=22，内置 zstd) 跑解码脚本，Electron 内置 Node 20 无 zstd
+function runUsageCalc() {
+  return new Promise((resolve) => {
+    let code;
+    try { code = fs.readFileSync(path.join(__dirname, 'usage-calc.cjs'), 'utf8'); }
+    catch (e) { resolve({ error: '计算脚本缺失: ' + (e.message || e) }); return; }
+    let out = '', errOut = '';
+    let settled = false;
+    let child;
+    try {
+      child = spawn(nodeExe(), ['--input-type=commonjs', '-'], { env: { ...process.env } });
+    } catch (e) { resolve({ error: '无法启动计算进程: ' + (e.message || e) }); return; }
+    child.stdout.on('data', (d) => { out += d.toString(); });
+    child.stderr.on('data', (d) => { errOut += d.toString(); });
+    child.on('error', (e) => { if (!settled) { settled = true; resolve({ error: '计算进程错误: ' + (e.message || e) }); } });
+    child.on('exit', (code) => {
+      if (settled) return;
+      settled = true;
+      if (code !== 0) { resolve({ error: '计算进程退出 code=' + code + ': ' + (errOut || '').slice(0, 300) }); return; }
+      try { resolve(JSON.parse(out)); }
+      catch (e) { resolve({ error: '结果解析失败: ' + (errOut || out || '').slice(0, 500) }); }
+    });
+    try { child.stdin.write(code); child.stdin.end(); } catch (e) { if (!settled) { settled = true; resolve({ error: '写入脚本失败: ' + (e.message || e) }); } }
+  });
+}
+
+ipcMain.handle('usage-cost', () => runUsageCalc());
+
+// 刷新价格：抓官方 pricing 页解析 v4 系列价格，写入 ~/.dsh/usage-prices.json
+function parsePricesFromHtml(html) {
+  // 表头模型顺序
+  const head = html.match(/<td[^>]*colspan="3"[^>]*>\s*模型\s*<\/td>([\s\S]*?)<\/tr>/i);
+  const models = [];
+  if (head) {
+    const re = /<td>\s*(deepseek-[\w-]+)\s*<\/td>/gi;
+    let m;
+    while ((m = re.exec(head[1]))) models.push(m[1]);
+  }
+  // 三种计费行：缓存命中 / 缓存未命中 / 输出，各含空闲与高峰两行（每行 3 列，顺序 = 模型列顺序）
+  const row = (label) => {
+    const seg = html.match(new RegExp(label + '[\\s\\S]*?高峰时段[\\s\\S]*?<\/tr>', 'i'));
+    if (!seg) return null;
+    return [...seg[0].matchAll(/(\d+(?:\.\d+)?)元/g)].map((x) => parseFloat(x[1]));
+  };
+  const hitNums = row('（缓存命中）');
+  const missNums = row('（缓存未命中）');
+  const outNums = row('百万tokens输出');
+  const modelsOut = {};
+  if (models.length >= 2 && hitNums && missNums && outNums) {
+    // 每行 3 列，顺序 = models 顺序；空闲=前半，高峰=后半
+    const n = models.length;
+    for (let i = 0; i < n; i++) {
+      const name = models[i];
+      const offHit = hitNums[i], peakHit = hitNums[n + i];
+      const offMiss = missNums[i], peakMiss = missNums[n + i];
+      const offOut = outNums[i], peakOut = outNums[n + i];
+      if ([offHit, peakHit, offMiss, peakMiss, offOut, peakOut].every((x) => typeof x === 'number' && isFinite(x))) {
+        modelsOut[name] = {
+          peak: { input: peakMiss, cacheRead: peakHit, output: peakOut },
+          off:  { input: offMiss,  cacheRead: offHit,  output: offOut  }
+        };
+      }
+    }
+  }
+  return modelsOut;
+}
+
+ipcMain.handle('usage-refresh-prices', async () => {
+  try {
+    const res = await fetch('https://api-docs.deepseek.com/zh-cn/quick_start/pricing/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36' }
+    });
+    const html = await res.text();
+    const models = parsePricesFromHtml(html);
+    if (!models || Object.keys(models).length === 0) {
+      return { ok: false, error: '未从官方页面解析到价格（页面结构可能已变化）' };
+    }
+    const data = {
+      updatedAt: new Date().toISOString(),
+      priceCutoffUtc: Date.UTC(2026, 7, 16, 16), // 8/17 00:00 北京时间，此前为调价前统一价
+      source: 'https://api-docs.deepseek.com/zh-cn/quick_start/pricing/',
+      models
+    };
+    fs.mkdirSync(path.dirname(USAGE_PRICES_PATH), { recursive: true });
+    fs.writeFileSync(USAGE_PRICES_PATH, JSON.stringify(data, null, 2), 'utf8');
+    return { ok: true, models };
+  } catch (err) { return { ok: false, error: String((err && err.message) || err) }; }
+});
+
+// ─── DSH 更新检查 ───
+ipcMain.handle('dsh-check-update', async () => {
+  const local = getLocalDshVersion();
+  try {
+    const latest = await new Promise((resolve, reject) => {
+      execFile('npm.cmd', ['view', '@deepseek-ai/dsh', 'version'], { timeout: 40000, windowsHide: true }, (err, stdout) => {
+        if (err) return reject(err);
+        const v = (stdout || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean)[0];
+        resolve(v || null);
+      });
+    });
+    return { ok: true, local, latest, hasUpdate: !!(local && latest && cmpVersion(latest, local) > 0) };
+  } catch (err) {
+    return { ok: false, local, error: String((err && err.message) || err) };
+  }
+});
+
+ipcMain.handle('dsh-update', async () => {
+  try {
+    // 触发 npx 拉取最新版（下载到新的缓存目录），随后重启 DSH 服务
+    await new Promise((resolve, reject) => {
+      execFile('npx.cmd', ['--yes', '@deepseek-ai/dsh@latest', '--version'], { timeout: 180000, windowsHide: true }, (err, stdout, stderr) => {
+        if (err && !(stdout || stderr)) return reject(err);
+        resolve(stdout || stderr || '');
+      });
+    });
+    const local = getLocalDshVersion();
+    const restarted = await restartServices();
+    return { ok: true, local, restarted };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err) };
+  }
 });
 
 const gotLock = app.requestSingleInstanceLock();

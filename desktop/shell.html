@@ -24,8 +24,6 @@
   #platform-webview { flex: 1; width: 100%; height: 100%; border: none; }
   #ds-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 13px; }
   #ds-model { background: #2a2b31; color: #e8ebf0; border: none; border-radius: 6px; padding: 5px 8px; }
-  #ds-balance { color: #9aa3b2; }
-  #ds-refresh { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
   #ds-settings { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; margin-left: auto; }
   #ds-messages { flex: 1 1 auto; overflow-y: auto; padding: 12px; }
   .msg { margin-bottom: 12px; max-width: 82%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
@@ -39,6 +37,54 @@
   #loghead { display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; font-size: 12px; color: #9aa3b2; background: #1e1f24; }
   #loghead button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
   #log { flex: 1; overflow: auto; padding: 8px 12px; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: #c9d1e0; }
+  /* ─── 个人面板 ─── */
+  #view-profile { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  /* 两栏布局（ChatGPT 风格） */
+  #pf-layout { display: flex; flex: 1; min-height: 0; }
+  #pf-sidebar { width: 180px; flex-shrink: 0; background: #1a1b20; border-right: 1px solid #2a2b31; padding: 10px 8px; overflow-y: auto; }
+  .pf-nav { padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #9aa3b2; margin-bottom: 2px; user-select: none; }
+  .pf-nav:hover { background: #23252b; color: #e8ebf0; }
+  .pf-nav.active { background: #2b3a55; color: #fff; }
+  #pf-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
+  .pf-pane { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  .pf-pane.active { display: flex; }
+  .pf-pane-title { font-size: 15px; font-weight: 600; color: #e8ebf0; padding: 14px 16px 4px; }
+  /* 峰谷检测横幅（卡片化） */
+  #pf-peak-banner { display: flex; align-items: center; gap: 18px; padding: 14px 16px; margin: 10px 16px; background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; }
+  #pf-peak-img { max-height: 36vh; max-width: 36vw; width: auto; height: auto; border-radius: 8px; border: 1px solid #2a2b31; }
+  .pf-peak-info { display: flex; flex-direction: column; gap: 6px; }
+  .pf-peak-label { font-size: 22px; font-weight: 700; color: #e8ebf0; }
+  .pf-peak-desc { font-size: 13px; color: #9aa3b2; }
+  /* DSH 版本更新（卡片化） */
+  #pf-update { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; margin: 10px 16px; background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; font-size: 13px; }
+  .pf-update-info { display: flex; align-items: center; gap: 8px; }
+  .pf-update-label { color: #9aa3b2; }
+  .pf-update-ver { color: #e8ebf0; font-weight: 600; }
+  .pf-update-ver.new { color: #22c55e; }
+  .pf-update-actions { display: flex; gap: 8px; }
+  #pf-update button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
+  #pf-update button.primary { background: #2b3a55; color: #fff; }
+  #pf-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 13px; }
+  #pf-bar .spacer { flex: 1; }
+  #pf-bar button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+  #pf-bar button.primary { background: #2b3a55; color: #fff; }
+  #pf-summary { display: flex; gap: 10px; padding: 12px; flex-wrap: wrap; }
+  .pf-card { background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; padding: 12px 16px; min-width: 150px; }
+  .pf-card-label { font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
+  .pf-card-value { font-size: 20px; font-weight: 600; color: #e8ebf0; }
+  .pf-card-value.small { font-size: 13px; font-weight: 400; color: #c9d1e0; word-break: break-all; }
+  #pf-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+  .pf-session { background: #1e1f24; border: 1px solid #2a2b31; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .pf-session-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; }
+  .pf-session-head:hover { background: #23252b; }
+  .pf-session-title { flex: 1; font-size: 13px; color: #e8ebf0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pf-session-cost { font-size: 14px; font-weight: 600; color: #22c55e; }
+  .pf-session-tokens { font-size: 12px; color: #9aa3b2; }
+  .pf-session-detail { display: none; padding: 4px 14px 12px; font-size: 12px; color: #9aa3b2; line-height: 1.7; border-top: 1px solid #2a2b31; }
+  .pf-session.open .pf-session-detail { display: block; }
+  .pf-row { display: flex; justify-content: space-between; gap: 12px; }
+  .pf-note { font-size: 12px; color: #6b7280; padding: 8px 4px; }
+  .pf-err { color: #ef4444; font-size: 13px; padding: 12px; }
 </style>
 </head>
 <body>
@@ -47,6 +93,7 @@
     <button class="tab active" id="tab-dsh">DSH</button>
     <button class="tab" id="tab-deepseek">DeepSeek</button>
     <button class="tab" id="tab-platform">开放平台</button>
+    <button class="tab" id="tab-profile">个人</button>
     <span class="spacer"></span>
     <button id="logbtn">日志</button>
   </div>
@@ -65,8 +112,6 @@
         <option value="deepseek-chat">deepseek-chat</option>
         <option value="deepseek-reasoner">deepseek-reasoner</option>
       </select>
-      <span id="ds-balance">余额: -</span>
-      <button id="ds-refresh">查余额</button>
       <button id="ds-settings">设置</button>
     </div>
     <div id="ds-messages"></div>
@@ -78,6 +123,69 @@
 
   <div id="view-platform">
     <webview id="platform-webview" src="https://platform.deepseek.com"></webview>
+  </div>
+
+  <div id="view-profile">
+    <div id="pf-layout">
+      <div id="pf-sidebar">
+        <div class="pf-nav active" data-pane="overview">概览</div>
+        <div class="pf-nav" data-pane="usage">消耗明细</div>
+        <div class="pf-nav" data-pane="updates">版本更新</div>
+        <div class="pf-nav" data-pane="about">关于</div>
+      </div>
+      <div id="pf-content">
+        <div class="pf-pane active" id="pane-overview">
+          <div id="pf-peak-banner">
+            <img id="pf-peak-img" src="assets/offpeak.png" alt="时段示意图">
+            <div class="pf-peak-info">
+              <div class="pf-peak-label" id="pf-peak-label">高等模型时段</div>
+              <div class="pf-peak-desc" id="pf-peak-desc">算力空闲 · 谷价</div>
+            </div>
+          </div>
+          <div class="pf-pane-title">消耗概览</div>
+          <div id="pf-summary">
+            <div class="pf-card"><div class="pf-card-label">总金额</div><div class="pf-card-value" id="pf-total-cost">¥ -</div></div>
+            <div class="pf-card"><div class="pf-card-label">总 Token</div><div class="pf-card-value" id="pf-total-tokens">-</div></div>
+            <div class="pf-card"><div class="pf-card-label">调价前 / 高峰 / 空闲</div><div class="pf-card-value small" id="pf-peak-off">-</div></div>
+            <div class="pf-card"><div class="pf-card-label">价格来源</div><div class="pf-card-value small" id="pf-price-src">内置默认价</div></div>
+          </div>
+        </div>
+        <div class="pf-pane" id="pane-usage">
+          <div id="pf-bar">
+            <span>消耗明细</span>
+            <span class="spacer"></span>
+            <button id="pf-refresh-price">刷新价格</button>
+            <button id="pf-refresh" class="primary">刷新消耗</button>
+          </div>
+          <div id="pf-list"></div>
+        </div>
+        <div class="pf-pane" id="pane-updates">
+          <div class="pf-pane-title">DSH 更新</div>
+          <div id="pf-update">
+            <div class="pf-update-info">
+              <span class="pf-update-label">DSH 版本</span>
+              <span class="pf-update-ver" id="pf-dsh-ver">—</span>
+            </div>
+            <div class="pf-update-actions">
+              <button id="pf-check-update">检查更新</button>
+              <button id="pf-apply-update" class="primary" style="display:none">一键更新</button>
+            </div>
+          </div>
+          <div class="pf-note">DeepSeek Harness 走 npm 缓存，官方发新版本后这里可一键拉取并重启服务。</div>
+        </div>
+        <div class="pf-pane" id="pane-about">
+          <div class="pf-pane-title">关于</div>
+          <div class="pf-about">
+            <div class="pf-about-name">DSH 工作台</div>
+            <div class="pf-about-desc">DeepSeek Harness 桌面端（自包含）</div>
+            <div class="pf-about-row"><span>应用版本</span><span id="pf-about-app">0.3.0</span></div>
+            <div class="pf-about-row"><span>Electron</span><span id="pf-about-electron">-</span></div>
+            <div class="pf-about-row"><span>Chromium</span><span id="pf-about-chrome">-</span></div>
+            <div class="pf-about-row"><span>Node</span><span id="pf-about-node">-</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="logwrap">
@@ -123,24 +231,184 @@
   const tabDsh = document.getElementById('tab-dsh');
   const tabDs = document.getElementById('tab-deepseek');
   const tabPlatform = document.getElementById('tab-platform');
+  const tabProfile = document.getElementById('tab-profile');
   const viewDsh = document.getElementById('view-dsh');
   const viewDs = document.getElementById('view-deepseek');
   const viewPlatform = document.getElementById('view-platform');
+  const viewProfile = document.getElementById('view-profile');
+  let profileVisible = false;
   function switchTab(which) {
     viewDsh.style.display = which === 'dsh' ? 'flex' : 'none';
     viewDs.style.display = which === 'deepseek' ? 'flex' : 'none';
     viewPlatform.style.display = which === 'platform' ? 'flex' : 'none';
+    viewProfile.style.display = which === 'profile' ? 'flex' : 'none';
     tabDsh.classList.toggle('active', which === 'dsh');
     tabDs.classList.toggle('active', which === 'deepseek');
     tabPlatform.classList.toggle('active', which === 'platform');
+    tabProfile.classList.toggle('active', which === 'profile');
+    profileVisible = (which === 'profile');
+    if (which === 'profile') { loadUsage(false); checkDshUpdate(); }
   }
   tabDsh.onclick = () => switchTab('dsh');
   tabDs.onclick = () => switchTab('deepseek');
   tabPlatform.onclick = () => switchTab('platform');
+  tabProfile.onclick = () => switchTab('profile');
+
+  // ─── 个人面板：峰谷检测 + 消耗统计 ───
+  // 峰谷时段：北京时间 周一~周五 9:00-12:00、14:00-18:00 为高峰，其余空闲（谷价）
+  function currentPeakPhase() {
+    const bj = new Date(Date.now() + 8 * 3600 * 1000);
+    const day = bj.getUTCDay();
+    const t = bj.getUTCHours() * 60 + bj.getUTCMinutes();
+    const isPeak = (day >= 1 && day <= 5) && ((t >= 9 * 60 && t < 12 * 60) || (t >= 14 * 60 && t < 18 * 60));
+    return isPeak;
+  }
+  function renderPeakPhase() {
+    const isPeak = currentPeakPhase();
+    const label = document.getElementById('pf-peak-label');
+    const desc = document.getElementById('pf-peak-desc');
+    const img = document.getElementById('pf-peak-img');
+    if (isPeak) {
+      label.textContent = '梁白开时段';
+      desc.textContent = '算力高峰 · 峰价（北京时间工作日 9-12、14-18）';
+      img.src = 'assets/peak.png';
+    } else {
+      label.textContent = '高等模型时段';
+      desc.textContent = '算力空闲 · 谷价（其余时段）';
+      img.src = 'assets/offpeak.png';
+    }
+  }
+  renderPeakPhase();
+  setInterval(renderPeakPhase, 30000);
+  // 左侧导航切换（ChatGPT 风格两栏）
+  const pfNavs = document.querySelectorAll('.pf-nav');
+  const pfPanes = document.querySelectorAll('.pf-pane');
+  function switchPane(name) {
+    pfNavs.forEach((n) => n.classList.toggle('active', n.dataset.pane === name));
+    pfPanes.forEach((p) => p.classList.toggle('active', p.id === 'pane-' + name));
+    if (name === 'usage') loadUsage(false);
+    if (name === 'updates') checkDshUpdate();
+  }
+  pfNavs.forEach((n) => { n.onclick = () => switchPane(n.dataset.pane); });
+  // 关于页版本填充
+  try {
+    const v = window.dshDesktop.versions || {};
+    document.getElementById('pf-about-electron').textContent = v.electron || '-';
+    document.getElementById('pf-about-chrome').textContent = v.chrome || '-';
+    document.getElementById('pf-about-node').textContent = v.node || '-';
+  } catch (e) {}
+  // DSH 版本更新检查
+  function renderDshVersion(r) {
+    const ver = document.getElementById('pf-dsh-ver');
+    const btn = document.getElementById('pf-apply-update');
+    if (!r || r.error || !r.ok) {
+      ver.textContent = (r && r.local) ? (r.local + '（检查失败）') : '—';
+      ver.className = 'pf-update-ver';
+      btn.style.display = 'none';
+      return;
+    }
+    if (r.hasUpdate) {
+      ver.textContent = r.local + ' → 最新 ' + r.latest;
+      ver.className = 'pf-update-ver new';
+      btn.style.display = '';
+    } else {
+      ver.textContent = (r.local || '—') + (r.latest ? '（已是最新）' : '');
+      ver.className = 'pf-update-ver';
+      btn.style.display = 'none';
+    }
+  }
+  let checkingUpdate = false;
+  function checkDshUpdate() {
+    if (checkingUpdate) return;
+    checkingUpdate = true;
+    const ver = document.getElementById('pf-dsh-ver');
+    ver.textContent = '检查中…';
+    window.dshDesktop.update.check().then((r) => { checkingUpdate = false; renderDshVersion(r); });
+  }
+  document.getElementById('pf-check-update').onclick = checkDshUpdate;
+  document.getElementById('pf-apply-update').onclick = () => {
+    const btn = document.getElementById('pf-apply-update');
+    btn.textContent = '更新中…';
+    btn.disabled = true;
+    window.dshDesktop.update.apply().then((r) => {
+      btn.textContent = '一键更新';
+      btn.disabled = false;
+      if (r && r.ok) {
+        alert('DSH 已更新到 ' + (r.local || '最新') + (r.restarted ? '，服务已重启。' : '（服务重启失败，请手动重启应用）。'));
+        checkDshUpdate();
+      } else {
+        alert('更新失败：' + ((r && r.error) || '未知错误'));
+      }
+    });
+  };
+  function fmtTokens(n) {
+    if (n == null) return '-';
+    if (n < 1e3) return String(n);
+    const v = (x) => x >= 100 ? String(Math.round(x)) : String(Math.round(x * 10) / 10);
+    if (n < 1e6) return v(n / 1e3) + 'K';
+    return v(n / 1e6) + 'M';
+  }
+  function fmtMoney(x) {
+    if (x == null) return '-';
+    if (x < 0.01 && x > 0) return '¥' + x.toFixed(4);
+    return '¥' + x.toFixed(2);
+  }
+  function toggleSession(el) { el.parentElement.classList.toggle('open'); }
+  function renderUsage(data) {
+    const list = document.getElementById('pf-list');
+    if (!data || data.error) {
+      list.innerHTML = '<div class="pf-err">' + ((data && data.error) || '无数据') + '</div>';
+      return;
+    }
+    const g = data.grand || {};
+    document.getElementById('pf-total-cost').textContent = fmtMoney(g.totalCost);
+    document.getElementById('pf-total-tokens').textContent = fmtTokens(g.totalTokens);
+    const pre = (g.preIn + g.preCache + g.preOut) || 0;
+    const peak = (g.peakIn + g.peakCache + g.peakOut) || 0;
+    const off = (g.offIn + g.offCache + g.offOut) || 0;
+    document.getElementById('pf-peak-off').textContent = '调价前 ' + fmtTokens(pre) + ' · 高峰 ' + fmtTokens(peak) + ' · 空闲 ' + fmtTokens(off);
+    document.getElementById('pf-price-src').textContent = '官方价（含调价历史）';
+    const rows = [];
+    for (const s of (data.sessions || [])) {
+      if (s.error) { rows.push('<div class="pf-session"><div class="pf-session-head"><span class="pf-session-title">' + s.id + ' 读取失败</span><span class="pf-session-tokens">' + s.error + '</span></div></div>'); continue; }
+      const b = s.buckets;
+      const detail =
+        '<div class="pf-row"><span>调价前 · 未命中 ' + fmtTokens(b.preIn) + ' · 命中 ' + fmtTokens(b.preCache) + ' · 输出 ' + fmtTokens(b.preOut) + '</span><span>' + fmtMoney(s.costPre) + '</span></div>' +
+        '<div class="pf-row"><span>高峰 · 未命中 ' + fmtTokens(b.peakIn) + ' · 命中 ' + fmtTokens(b.peakCache) + ' · 输出 ' + fmtTokens(b.peakOut) + '</span><span>' + fmtMoney(s.costPeak) + '</span></div>' +
+        '<div class="pf-row"><span>空闲 · 未命中 ' + fmtTokens(b.offIn) + ' · 命中 ' + fmtTokens(b.offCache) + ' · 输出 ' + fmtTokens(b.offOut) + '</span><span>' + fmtMoney(s.costOff) + '</span></div>' +
+        (s.model ? '<div class="pf-row"><span>模型 ' + s.model + ' · 步数 ' + s.steps + '</span><span></span></div>' : '');
+      rows.push(
+        '<div class="pf-session"><div class="pf-session-head" onclick="toggleSession(this)">' +
+        '<span class="pf-session-title">' + (s.title || s.id) + '</span>' +
+        '<span class="pf-session-tokens">' + fmtTokens(s.totalTokens) + ' tokens</span>' +
+        '<span class="pf-session-cost">' + fmtMoney(s.totalCost) + '</span>' +
+        '</div><div class="pf-session-detail">' + detail + '</div></div>'
+      );
+    }
+    list.innerHTML = rows.join('') || '<div class="pf-note">暂无会话</div>';
+  }
+  let usageLoading = false;
+  function loadUsage(silent) {
+    if (usageLoading) return;
+    usageLoading = true;
+    if (!silent) document.getElementById('pf-list').innerHTML = '<div class="pf-note">正在计算…</div>';
+    window.dshDesktop.usage.cost().then((d) => { usageLoading = false; renderUsage(d); });
+  }
+  document.getElementById('pf-refresh').onclick = () => loadUsage(false);
+  // 个人面板可见时每 20 秒静默刷新，跟上 DSH 最新对话产生的消耗
+  setInterval(() => { if (profileVisible) loadUsage(true); }, 20000);
+  document.getElementById('pf-refresh-price').onclick = () => {
+    const btn = document.getElementById('pf-refresh-price');
+    btn.textContent = '刷新中…';
+    window.dshDesktop.usage.refreshPrices().then((r) => {
+      btn.textContent = '刷新价格';
+      if (r && r.ok) { document.getElementById('pf-price-src').textContent = '官方(已刷新)'; loadUsage(false); }
+      else { alert('价格刷新失败：' + ((r && r.error) || '未知错误')); }
+    });
+  };
 
   // ─── DeepSeek ───
   const dsModel = document.getElementById('ds-model');
-  const dsBalance = document.getElementById('ds-balance');
   const dsMessages = document.getElementById('ds-messages');
   const dsInput = document.getElementById('ds-input');
   const dsSend = document.getElementById('ds-send');
@@ -155,21 +423,6 @@
     dsMessages.appendChild(div);
     dsMessages.scrollTop = dsMessages.scrollHeight;
     return div;
-  }
-
-  function refreshBalance() {
-    dsBalance.textContent = '余额: 查询中…';
-    window.dshDesktop.deepseek.balance(dsConfig).then((r) => {
-      if (r && r.ok) {
-        try {
-          const infos = (r.data && r.data.balance_infos) || [];
-          const total = infos.reduce((s, x) => s + (parseFloat(x.total_balance) || 0), 0);
-          dsBalance.textContent = '余额: ¥' + total.toFixed(2);
-        } catch (e) { dsBalance.textContent = '余额: 解析失败'; }
-      } else {
-        dsBalance.textContent = '余额: ' + ((r && r.error) || '查询失败');
-      }
-    });
   }
 
   let streamEl = null;
@@ -202,7 +455,6 @@
   dsInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dsSendMessage(); }
   });
-  document.getElementById('ds-refresh').onclick = refreshBalance;
   dsModel.onchange = () => { dsConfig.model = dsModel.value; window.dshDesktop.deepseek.setConfig(dsConfig); };
 
   // 设置对话框
@@ -232,7 +484,6 @@
       window.dshDesktop.deepseek.setConfig(dsConfig);
       dsModel.value = dsConfig.model;
       dlg.close();
-      refreshBalance();
     };
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -241,7 +492,6 @@
   // 初始加载配置
   window.dshDesktop.deepseek.getConfig().then((cfg) => {
     if (cfg) { dsConfig = { ...dsConfig, ...cfg }; dsModel.value = dsConfig.model || 'deepseek-chat'; }
-    if (dsConfig.apiKey) refreshBalance();
   });
 </script>
 </body>

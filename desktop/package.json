@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "DeepSeek Harness 桌面端（Electron 套壳本地 dsh web）",
   "main": "main.js",
   "author": "DSH",
@@ -25,6 +25,7 @@
       "main.js",
       "preload.js",
       "shell.html",
+      "usage-calc.cjs",
       "assets/**"
     ],
     "win": {

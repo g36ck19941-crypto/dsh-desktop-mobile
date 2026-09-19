@@ -14,5 +14,13 @@ contextBridge.exposeInMainWorld('dshDesktop', {
     chat: (cfg, messages) => ipcRenderer.send('deepseek-chat', { cfg, messages }),
     onChunk: (cb) => { ipcRenderer.on('deepseek-chunk', (_e, data) => cb(data)); },
     onError: (cb) => { ipcRenderer.on('deepseek-error', (_e, msg) => cb(msg)); }
+  },
+  usage: {
+    cost: () => ipcRenderer.invoke('usage-cost'),
+    refreshPrices: () => ipcRenderer.invoke('usage-refresh-prices')
+  },
+  update: {
+    check: () => ipcRenderer.invoke('dsh-check-update'),
+    apply: () => ipcRenderer.invoke('dsh-update')
   }
 });
