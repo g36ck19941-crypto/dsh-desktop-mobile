@@ -70,6 +70,20 @@ function decodeEvents(file) {
   return out;
 }
 
+// 自适应：在会话目录里找版本最高的日志文件，兼容 session.jsonl.zstd(v0) / session.vN.jsonl.zstd(v1/v2/v3/未来)
+function findSessionFile(dir) {
+  let best = null, bestVer = -1;
+  let files = [];
+  try { files = readdirSync(dir); } catch (e) {}
+  for (const name of files) {
+    const m = name.match(/^session(?:\.v(\d+))?\.jsonl\.zstd$/);
+    if (!m) continue;
+    const ver = m[1] ? parseInt(m[1], 10) : 0;   // 无版本号 = v0
+    if (ver > bestVer) { bestVer = ver; best = join(dir, name); }
+  }
+  return best;
+}
+
 // 峰谷（仅调价后生效）：北京时间(UTC+8) 周一~周五 9:00-12:00、14:00-18:00 为高峰
 function isPeak(utcMs) {
   const bj = new Date(utcMs + 8 * 3600 * 1000);
@@ -170,8 +184,8 @@ function main() {
     for (const sd of sds) {
       if (archived.has(sd)) continue;
       if (active.size > 0 && !active.has(sd)) continue;
-      const f = join(pd, sd, 'session.jsonl.zstd');
-      if (!existsSync(f)) continue;
+      const f = findSessionFile(join(pd, sd));
+      if (!f) continue;
       try { const r = costSession(decodeEvents(f)); r.id = sd; results.push(r); }
       catch (e) { results.push({ id: sd, error: String(e.message || e) }); }
     }

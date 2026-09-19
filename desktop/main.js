@@ -24,6 +24,7 @@ let proxyProc = null;
 let quitting = false;
 let lastLaunch = 0;
 let currentStatus = 'starting';
+let dshToken = null;
 
 function nodeExe() { return fs.existsSync(NODE_EXE) ? NODE_EXE : 'node.exe'; }
 
@@ -85,20 +86,23 @@ function dshPkgOf(dir) {
   return path.join(process.env.LOCALAPPDATA || '', 'npm-cache', '_npx', dir, 'node_modules', '@deepseek-ai', 'dsh', 'package.json');
 }
 
-// 找到本地缓存的 DSH，优先返回版本最新的那个（避免旧缓存遮蔽新版）
+// 找到本地缓存的 DSH：优先用锁定版本（~/.dsh/dsh-pinned-version.txt），否则用最新
 function findDshBin() {
   const base = path.join(process.env.LOCALAPPDATA || '', 'npm-cache', '_npx');
-  let best = null, bestVer = null;
+  let pinned = null;
+  try { pinned = fs.readFileSync(path.join(os.homedir(), '.dsh', 'dsh-pinned-version.txt'), 'utf8').trim(); } catch (e) {}
+  let best = null, bestVer = null, pinnedBin = null;
   try {
     for (const d of fs.readdirSync(base)) {
       const bin = path.join(base, d, 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js');
       if (!fs.existsSync(bin)) continue;
       let v = '0.0.0';
       try { v = (JSON.parse(fs.readFileSync(dshPkgOf(d), 'utf8'))).version || '0.0.0'; } catch (e) {}
+      if (pinned && v === pinned) pinnedBin = bin;
       if (!best || cmpVersion(v, bestVer) > 0) { best = bin; bestVer = v; }
     }
   } catch (e) {}
-  return best;
+  return pinnedBin || best;
 }
 
 function getLocalDshVersion() {
@@ -155,12 +159,17 @@ function startServer() {
   lastLaunch = Date.now();
   setStatus('starting');
   const bin = findDshBin();
-  const args = bin ? [bin, 'web', ...trustedHostArgs()] : ['--yes', '@deepseek-ai/dsh', 'web', ...trustedHostArgs()];
+  const args = bin ? [bin, 'web', '--no-open', ...trustedHostArgs()] : ['--yes', '@deepseek-ai/dsh', 'web', '--no-open', ...trustedHostArgs()];
   const cmd = bin ? nodeExe() : 'npx.cmd';
   sendLog('[dsh] 启动: ' + cmd + ' ' + args.join(' ') + '\n');
   try {
     serverProc = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env }, cwd: app.getPath('home') });
-    serverProc.stdout.on('data', (d) => sendLog(d.toString()));
+    serverProc.stdout.on('data', (d) => {
+      const s = d.toString();
+      sendLog(s);
+      const m = s.match(/token=([A-Za-z0-9_-]+)/);
+      if (m && m[1]) { dshToken = m[1]; try { if (win && !win.isDestroyed()) win.webContents.send('dsh-token', dshToken); } catch (e) {} }
+    });
     serverProc.stderr.on('data', (d) => sendLog(d.toString()));
     serverProc.on('error', (e) => { sendLog('[dsh] 启动失败: ' + e.message + '\n'); serverProc = null; setStatus('error'); });
     serverProc.on('exit', (code) => { sendLog('[dsh] 已退出 code=' + code + '\n'); serverProc = null; if (!quitting) setStatus('error'); });
@@ -265,6 +274,7 @@ function createTray() {
 }
 
 ipcMain.handle('dsh-get-status', () => currentStatus);
+ipcMain.handle('dsh-get-token', () => dshToken);
 
 // ─── DeepSeek 开放平台 ───
 const DEEPSEEK_CONFIG_PATH = path.join(os.homedir(), '.dsh', 'deepseek-config.json');

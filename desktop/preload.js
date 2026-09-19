@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('dshDesktop', {
   onLog: (cb) => { ipcRenderer.on('dsh-log', (_e, msg) => cb(msg)); },
   onStatus: (cb) => { ipcRenderer.on('dsh-status', (_e, state) => cb(state)); },
   getStatus: () => ipcRenderer.invoke('dsh-get-status'),
+  getToken: () => ipcRenderer.invoke('dsh-get-token'),
+  onToken: (cb) => { ipcRenderer.on('dsh-token', (_e, token) => cb(token)); },
   toggleLog: () => ipcRenderer.send('dsh-toggle-log'),
   deepseek: {
     getConfig: () => ipcRenderer.invoke('deepseek-config-get'),

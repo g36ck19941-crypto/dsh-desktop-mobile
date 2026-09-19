@@ -18,7 +18,7 @@
   #dot { width: 9px; height: 9px; border-radius: 50%; background: #f0b429; }
   #dot.ready { background: #22c55e; }
   #dot.error { background: #ef4444; }
-  #frame { flex: 1 1 auto; border: none; background: #151517; }
+  #frame { flex: 1 1 auto; border: none; background: #151517; width: 100%; height: 100%; }
   #view-deepseek { display: none; flex-direction: column; flex: 1; min-height: 0; }
   #view-platform { display: none; flex: 1; min-height: 0; }
   #platform-webview { flex: 1; width: 100%; height: 100%; border: none; }
@@ -39,52 +39,75 @@
   #log { flex: 1; overflow: auto; padding: 8px 12px; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: #c9d1e0; }
   /* ─── 个人面板 ─── */
   #view-profile { display: none; flex-direction: column; flex: 1; min-height: 0; }
-  /* 两栏布局（ChatGPT 风格） */
+  /* 两栏布局（ChatGPT 账户设置风格） */
   #pf-layout { display: flex; flex: 1; min-height: 0; }
-  #pf-sidebar { width: 180px; flex-shrink: 0; background: #1a1b20; border-right: 1px solid #2a2b31; padding: 10px 8px; overflow-y: auto; }
-  .pf-nav { padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #9aa3b2; margin-bottom: 2px; user-select: none; }
-  .pf-nav:hover { background: #23252b; color: #e8ebf0; }
-  .pf-nav.active { background: #2b3a55; color: #fff; }
-  #pf-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-y: auto; }
-  .pf-pane { display: none; flex-direction: column; flex: 1; min-height: 0; }
-  .pf-pane.active { display: flex; }
-  .pf-pane-title { font-size: 15px; font-weight: 600; color: #e8ebf0; padding: 14px 16px 4px; }
-  /* 峰谷检测横幅（卡片化） */
-  #pf-peak-banner { display: flex; align-items: center; gap: 18px; padding: 14px 16px; margin: 10px 16px; background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; }
-  #pf-peak-img { max-height: 36vh; max-width: 36vw; width: auto; height: auto; border-radius: 8px; border: 1px solid #2a2b31; }
-  .pf-peak-info { display: flex; flex-direction: column; gap: 6px; }
-  .pf-peak-label { font-size: 22px; font-weight: 700; color: #e8ebf0; }
-  .pf-peak-desc { font-size: 13px; color: #9aa3b2; }
-  /* DSH 版本更新（卡片化） */
-  #pf-update { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; margin: 10px 16px; background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; font-size: 13px; }
-  .pf-update-info { display: flex; align-items: center; gap: 8px; }
-  .pf-update-label { color: #9aa3b2; }
-  .pf-update-ver { color: #e8ebf0; font-weight: 600; }
-  .pf-update-ver.new { color: #22c55e; }
-  .pf-update-actions { display: flex; gap: 8px; }
-  #pf-update button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px; }
-  #pf-update button.primary { background: #2b3a55; color: #fff; }
+  #pf-sidebar { width: 176px; flex-shrink: 0; padding: 16px 10px; border-right: 1px solid #1f1f24; }
+  .pf-group-label { font-size: 11px; color: #6f6f78; padding: 0 10px 6px; letter-spacing: .04em; }
+  .pf-nav { padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #a4a4ad; margin-bottom: 2px; user-select: none; transition: background .12s, color .12s; }
+  .pf-nav:hover { background: #1d1d21; color: #ececf0; }
+  .pf-nav.active { background: rgba(91,141,239,.16); color: #cfe0ff; font-weight: 500; }
+  #pf-content { flex: 1; min-width: 0; overflow-y: auto; padding: 22px 32px 36px; }
+  .pf-content-inner { max-width: 620px; margin: 0 auto; }
+  .pf-pane { display: none; }
+  .pf-pane.active { display: block; animation: pffade .18s ease; }
+  @keyframes pffade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .pf-pane-title { font-size: 18px; font-weight: 600; color: #ececf0; margin-bottom: 16px; }
+  .pf-pane-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .pf-pane-head .pf-pane-title { margin-bottom: 0; }
+
+  /* 峰谷横幅 */
+  #pf-peak-banner { display: flex; align-items: center; gap: 18px; background: #161618; border: 1px solid #27272c; border-radius: 12px; padding: 16px 18px; margin-bottom: 26px; }
+  #pf-peak-img { height: 128px; width: auto; border-radius: 8px; border: 1px solid #27272c; }
+  .pf-peak-body { display: flex; flex-direction: column; gap: 7px; }
+  .pf-peak-title { font-size: 19px; font-weight: 600; color: #ececf0; }
+  .pf-peak-desc { font-size: 12.5px; color: #a4a4ad; }
+  .pf-badge { align-self: flex-start; font-size: 11.5px; padding: 3px 10px; border-radius: 999px; background: rgba(52,211,153,.14); color: #34d399; border: 1px solid rgba(52,211,153,.25); }
+  .pf-badge.peak { background: rgba(251,191,36,.14); color: #fbbf24; border-color: rgba(251,191,36,.25); }
+
+  /* 分组 + 设置行 */
+  .pf-section { margin-bottom: 24px; }
+  .pf-section-title { font-size: 12px; color: #6f6f78; margin-bottom: 6px; padding: 0 4px; letter-spacing: .03em; }
+  .pf-settings { background: #161618; border: 1px solid #27272c; border-radius: 12px; overflow: hidden; }
+  .pf-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 16px; }
+  .pf-setting + .pf-setting { border-top: 1px solid #1f1f24; }
+  .pf-setting-info { min-width: 0; }
+  .pf-setting-label { font-size: 13.5px; color: #ececf0; }
+  .pf-setting-desc { font-size: 12px; color: #6f6f78; margin-top: 2px; }
+  .pf-setting-right { flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+  .pf-setting-value { font-size: 13.5px; color: #a4a4ad; font-variant-numeric: tabular-nums; }
+  .pf-setting-value.strong { font-size: 15px; font-weight: 600; color: #ececf0; }
+
+  /* 按钮 */
+  .pf-btn { background: #1d1d21; color: #ececf0; border: 1px solid #27272c; border-radius: 8px; padding: 6px 13px; cursor: pointer; font-size: 12.5px; transition: background .12s; }
+  .pf-btn:hover { background: #232329; }
+  .pf-btn.primary { background: #5b8def; border-color: transparent; color: #fff; }
+  .pf-btn.primary:hover { background: #6b98f2; }
+  .pf-btn.ghost { background: transparent; }
+  .pf-btn.ghost:hover { background: #1d1d21; }
+
+  /* 会话列表（设置行样式） */
+  #pf-list { display: flex; flex-direction: column; }
+  .pf-session { cursor: pointer; transition: background .12s; }
+  .pf-session + .pf-session { border-top: 1px solid #1f1f24; }
+  .pf-session:hover { background: #1d1d21; }
+  .pf-session.open { background: #1d1d21; }
+  .pf-session-main { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 16px; }
+  .pf-session .pf-session-title { font-size: 13.5px; color: #ececf0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pf-session .pf-session-sub { font-size: 12px; color: #6f6f78; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .pf-session .pf-session-cost { font-size: 14px; font-weight: 600; color: #34d399; font-variant-numeric: tabular-nums; }
+  .pf-session-detail { display: none; padding: 4px 16px 12px; font-size: 12px; color: #a4a4ad; line-height: 1.9; border-top: 1px solid #1f1f24; }
+  .pf-session.open .pf-session-detail { display: block; }
+  .pf-row { display: flex; justify-content: space-between; gap: 12px; }
+
+  /* 关于 / 备注 */
+  .pf-about-desc { font-size: 12.5px; color: #a4a4ad; margin: -6px 0 16px; }
+  .pf-note { font-size: 12px; color: #6f6f78; margin-top: 12px; }
+  .pf-err { color: #ef4444; font-size: 13px; padding: 12px; }
+  /* 开放平台工具条（复用 pf-bar） */
   #pf-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e1f24; border-bottom: 1px solid #2a2b31; font-size: 13px; }
   #pf-bar .spacer { flex: 1; }
   #pf-bar button { background: #2a2b31; color: #c9d1e0; border: none; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
   #pf-bar button.primary { background: #2b3a55; color: #fff; }
-  #pf-summary { display: flex; gap: 10px; padding: 12px; flex-wrap: wrap; }
-  .pf-card { background: #1e1f24; border: 1px solid #2a2b31; border-radius: 10px; padding: 12px 16px; min-width: 150px; }
-  .pf-card-label { font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
-  .pf-card-value { font-size: 20px; font-weight: 600; color: #e8ebf0; }
-  .pf-card-value.small { font-size: 13px; font-weight: 400; color: #c9d1e0; word-break: break-all; }
-  #pf-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
-  .pf-session { background: #1e1f24; border: 1px solid #2a2b31; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
-  .pf-session-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; }
-  .pf-session-head:hover { background: #23252b; }
-  .pf-session-title { flex: 1; font-size: 13px; color: #e8ebf0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pf-session-cost { font-size: 14px; font-weight: 600; color: #22c55e; }
-  .pf-session-tokens { font-size: 12px; color: #9aa3b2; }
-  .pf-session-detail { display: none; padding: 4px 14px 12px; font-size: 12px; color: #9aa3b2; line-height: 1.7; border-top: 1px solid #2a2b31; }
-  .pf-session.open .pf-session-detail { display: block; }
-  .pf-row { display: flex; justify-content: space-between; gap: 12px; }
-  .pf-note { font-size: 12px; color: #6b7280; padding: 8px 4px; }
-  .pf-err { color: #ef4444; font-size: 13px; padding: 12px; }
 </style>
 </head>
 <body>
@@ -103,7 +126,7 @@
       <span id="dot"></span>
       <span id="statustext">正在启动…</span>
     </div>
-    <iframe id="frame" src="http://127.0.0.1:3080"></iframe>
+    <webview id="frame" src="http://127.0.0.1:3080"></webview>
   </div>
 
   <div id="view-deepseek">
@@ -122,66 +145,78 @@
   </div>
 
   <div id="view-platform">
+    <div id="pf-bar">
+      <span>开放平台</span>
+      <span class="spacer"></span>
+      <button id="platform-refresh">刷新</button>
+    </div>
     <webview id="platform-webview" src="https://platform.deepseek.com"></webview>
   </div>
 
   <div id="view-profile">
     <div id="pf-layout">
       <div id="pf-sidebar">
+        <div class="pf-group-label">个人中心</div>
         <div class="pf-nav active" data-pane="overview">概览</div>
         <div class="pf-nav" data-pane="usage">消耗明细</div>
         <div class="pf-nav" data-pane="updates">版本更新</div>
         <div class="pf-nav" data-pane="about">关于</div>
       </div>
       <div id="pf-content">
-        <div class="pf-pane active" id="pane-overview">
-          <div id="pf-peak-banner">
-            <img id="pf-peak-img" src="assets/offpeak.png" alt="时段示意图">
-            <div class="pf-peak-info">
-              <div class="pf-peak-label" id="pf-peak-label">高等模型时段</div>
-              <div class="pf-peak-desc" id="pf-peak-desc">算力空闲 · 谷价</div>
+        <div class="pf-content-inner">
+          <div class="pf-pane active" id="pane-overview">
+            <div class="pf-pane-title">概览</div>
+            <div id="pf-peak-banner">
+              <img id="pf-peak-img" src="assets/offpeak.png" alt="时段示意图">
+              <div class="pf-peak-body">
+                <span class="pf-badge" id="pf-peak-badge">谷价时段</span>
+                <div class="pf-peak-title" id="pf-peak-label">高等模型时段</div>
+                <div class="pf-peak-desc" id="pf-peak-desc">算力空闲 · 谷价</div>
+              </div>
+            </div>
+            <div class="pf-section">
+              <div class="pf-section-title">消耗统计</div>
+              <div class="pf-settings">
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">总金额</div><div class="pf-setting-desc">累计消耗</div></div><div class="pf-setting-right"><span class="pf-setting-value strong" id="pf-total-cost">¥ -</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">总 Token</div><div class="pf-setting-desc">含缓存命中</div></div><div class="pf-setting-right"><span class="pf-setting-value strong" id="pf-total-tokens">-</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">调价前 / 高峰 / 空闲</div><div class="pf-setting-desc">时段拆分</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-peak-off">-</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">价格来源</div><div class="pf-setting-desc" id="pf-price-src">内置默认价</div></div><div class="pf-setting-right"><button class="pf-btn ghost" id="pf-refresh-price">刷新价格</button></div></div>
+              </div>
             </div>
           </div>
-          <div class="pf-pane-title">消耗概览</div>
-          <div id="pf-summary">
-            <div class="pf-card"><div class="pf-card-label">总金额</div><div class="pf-card-value" id="pf-total-cost">¥ -</div></div>
-            <div class="pf-card"><div class="pf-card-label">总 Token</div><div class="pf-card-value" id="pf-total-tokens">-</div></div>
-            <div class="pf-card"><div class="pf-card-label">调价前 / 高峰 / 空闲</div><div class="pf-card-value small" id="pf-peak-off">-</div></div>
-            <div class="pf-card"><div class="pf-card-label">价格来源</div><div class="pf-card-value small" id="pf-price-src">内置默认价</div></div>
-          </div>
-        </div>
-        <div class="pf-pane" id="pane-usage">
-          <div id="pf-bar">
-            <span>消耗明细</span>
-            <span class="spacer"></span>
-            <button id="pf-refresh-price">刷新价格</button>
-            <button id="pf-refresh" class="primary">刷新消耗</button>
-          </div>
-          <div id="pf-list"></div>
-        </div>
-        <div class="pf-pane" id="pane-updates">
-          <div class="pf-pane-title">DSH 更新</div>
-          <div id="pf-update">
-            <div class="pf-update-info">
-              <span class="pf-update-label">DSH 版本</span>
-              <span class="pf-update-ver" id="pf-dsh-ver">—</span>
+          <div class="pf-pane" id="pane-usage">
+            <div class="pf-pane-head">
+              <div class="pf-pane-title">消耗明细</div>
+              <button class="pf-btn primary" id="pf-refresh">刷新</button>
             </div>
-            <div class="pf-update-actions">
-              <button id="pf-check-update">检查更新</button>
-              <button id="pf-apply-update" class="primary" style="display:none">一键更新</button>
+            <div class="pf-section">
+              <div class="pf-section-title">会话</div>
+              <div class="pf-settings" id="pf-list"></div>
             </div>
           </div>
-          <div class="pf-note">DeepSeek Harness 走 npm 缓存，官方发新版本后这里可一键拉取并重启服务。</div>
-        </div>
-        <div class="pf-pane" id="pane-about">
-          <div class="pf-pane-title">关于</div>
-          <div class="pf-about">
-            <div class="pf-about-name">DSH 工作台</div>
+          <div class="pf-pane" id="pane-updates">
+            <div class="pf-pane-title">版本更新</div>
+            <div class="pf-section">
+              <div class="pf-section-title">DSH（DeepSeek Harness）</div>
+              <div class="pf-settings">
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">当前版本</div><div class="pf-setting-desc">官方发新版本后这里可一键拉取并重启服务</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-dsh-ver">—</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">更新操作</div><div class="pf-setting-desc">检查 npm 最新版本</div></div><div class="pf-setting-right"><button class="pf-btn" id="pf-check-update">检查更新</button><button class="pf-btn primary" id="pf-apply-update" style="display:none">一键更新</button></div></div>
+              </div>
+            </div>
+            <div class="pf-note">DeepSeek Harness 走 npm 缓存，官方发新版本后这里可一键拉取并重启服务。</div>
+          </div>
+          <div class="pf-pane" id="pane-about">
+            <div class="pf-pane-title">关于</div>
             <div class="pf-about-desc">DeepSeek Harness 桌面端（自包含）</div>
-            <div class="pf-about-row"><span>应用版本</span><span id="pf-about-app">0.3.0</span></div>
-            <div class="pf-about-row"><span>Electron</span><span id="pf-about-electron">-</span></div>
-            <div class="pf-about-row"><span>Chromium</span><span id="pf-about-chrome">-</span></div>
-            <div class="pf-about-row"><span>Node</span><span id="pf-about-node">-</span></div>
+            <div class="pf-section">
+              <div class="pf-section-title">应用信息</div>
+              <div class="pf-settings">
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">应用版本</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-about-app">0.5.0</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">Electron</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-about-electron">-</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">Chromium</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-about-chrome">-</span></div></div>
+                <div class="pf-setting"><div class="pf-setting-info"><div class="pf-setting-label">Node</div></div><div class="pf-setting-right"><span class="pf-setting-value" id="pf-about-node">-</span></div></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -208,10 +243,32 @@
     if (s === 'ready') dot.className = 'ready';
     if (s === 'error') dot.className = 'error';
     text.textContent = label;
-    if (s === 'ready' && !frameReady) { frameReady = true; frame.src = 'http://127.0.0.1:3080'; }
+    if (s === 'ready' && !frameReady) { frameReady = true; loadFrame(); }
     else if (s !== 'ready') { frameReady = false; }
   }
   let frameReady = false;
+  let frameToken = null;
+  let frameLoading = false;
+  async function loadFrame() {
+    if (frameLoading) return;
+    frameLoading = true;
+    try {
+      // 轮询等 token：DSH 端口先就绪、token 稍后才打印
+      if (!frameToken) {
+        for (let i = 0; i < 60 && !frameToken; i++) {
+          try { frameToken = await window.dshDesktop.getToken(); } catch (e) {}
+          if (!frameToken) await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+      const url = frameToken ? 'http://127.0.0.1:3080/?token=' + frameToken : 'http://127.0.0.1:3080';
+      frame.src = url;
+    } finally {
+      frameLoading = false;
+    }
+  }
+  window.dshDesktop.onToken((token) => {
+    if (token) { frameToken = token; if (frameReady) loadFrame(); }
+  });
 
   function appendLog(msg) {
     logEl.textContent += msg;
@@ -224,6 +281,9 @@
   window.dshDesktop.getStatus().then(setStatus);
 
   logbtn.onclick = () => logwrap.classList.toggle('open');
+  document.getElementById('platform-refresh').onclick = () => {
+    try { document.getElementById('platform-webview').reload(); } catch (e) {}
+  };
   document.getElementById('closebtn').onclick = () => logwrap.classList.remove('open');
   document.getElementById('clearbtn').onclick = () => { logEl.textContent = ''; };
 
@@ -268,19 +328,24 @@
     const label = document.getElementById('pf-peak-label');
     const desc = document.getElementById('pf-peak-desc');
     const img = document.getElementById('pf-peak-img');
+    const badge = document.getElementById('pf-peak-badge');
     if (isPeak) {
       label.textContent = '梁白开时段';
       desc.textContent = '算力高峰 · 峰价（北京时间工作日 9-12、14-18）';
       img.src = 'assets/peak.png';
+      badge.textContent = '峰价时段';
+      badge.className = 'pf-badge peak';
     } else {
       label.textContent = '高等模型时段';
       desc.textContent = '算力空闲 · 谷价（其余时段）';
       img.src = 'assets/offpeak.png';
+      badge.textContent = '谷价时段';
+      badge.className = 'pf-badge';
     }
   }
   renderPeakPhase();
   setInterval(renderPeakPhase, 30000);
-  // 左侧导航切换（ChatGPT 风格两栏）
+  // 左侧导航切换（两栏）
   const pfNavs = document.querySelectorAll('.pf-nav');
   const pfPanes = document.querySelectorAll('.pf-pane');
   function switchPane(name) {
@@ -303,17 +368,17 @@
     const btn = document.getElementById('pf-apply-update');
     if (!r || r.error || !r.ok) {
       ver.textContent = (r && r.local) ? (r.local + '（检查失败）') : '—';
-      ver.className = 'pf-update-ver';
+      ver.style.color = '#a4a4ad';
       btn.style.display = 'none';
       return;
     }
     if (r.hasUpdate) {
       ver.textContent = r.local + ' → 最新 ' + r.latest;
-      ver.className = 'pf-update-ver new';
+      ver.style.color = '#34d399';
       btn.style.display = '';
     } else {
       ver.textContent = (r.local || '—') + (r.latest ? '（已是最新）' : '');
-      ver.className = 'pf-update-ver';
+      ver.style.color = '#a4a4ad';
       btn.style.display = 'none';
     }
   }
@@ -353,7 +418,7 @@
     if (x < 0.01 && x > 0) return '¥' + x.toFixed(4);
     return '¥' + x.toFixed(2);
   }
-  function toggleSession(el) { el.parentElement.classList.toggle('open'); }
+  function toggleSession(el) { el.classList.toggle('open'); }
   function renderUsage(data) {
     const list = document.getElementById('pf-list');
     if (!data || data.error) {
@@ -370,7 +435,7 @@
     document.getElementById('pf-price-src').textContent = '官方价（含调价历史）';
     const rows = [];
     for (const s of (data.sessions || [])) {
-      if (s.error) { rows.push('<div class="pf-session"><div class="pf-session-head"><span class="pf-session-title">' + s.id + ' 读取失败</span><span class="pf-session-tokens">' + s.error + '</span></div></div>'); continue; }
+      if (s.error) { rows.push('<div class="pf-session"><div class="pf-session-main"><div class="pf-setting-info"><div class="pf-session-title">' + s.id + ' 读取失败</div><div class="pf-session-sub">' + s.error + '</div></div></div></div>'); continue; }
       const b = s.buckets;
       const detail =
         '<div class="pf-row"><span>调价前 · 未命中 ' + fmtTokens(b.preIn) + ' · 命中 ' + fmtTokens(b.preCache) + ' · 输出 ' + fmtTokens(b.preOut) + '</span><span>' + fmtMoney(s.costPre) + '</span></div>' +
@@ -378,10 +443,10 @@
         '<div class="pf-row"><span>空闲 · 未命中 ' + fmtTokens(b.offIn) + ' · 命中 ' + fmtTokens(b.offCache) + ' · 输出 ' + fmtTokens(b.offOut) + '</span><span>' + fmtMoney(s.costOff) + '</span></div>' +
         (s.model ? '<div class="pf-row"><span>模型 ' + s.model + ' · 步数 ' + s.steps + '</span><span></span></div>' : '');
       rows.push(
-        '<div class="pf-session"><div class="pf-session-head" onclick="toggleSession(this)">' +
-        '<span class="pf-session-title">' + (s.title || s.id) + '</span>' +
-        '<span class="pf-session-tokens">' + fmtTokens(s.totalTokens) + ' tokens</span>' +
-        '<span class="pf-session-cost">' + fmtMoney(s.totalCost) + '</span>' +
+        '<div class="pf-session" onclick="toggleSession(this)">' +
+        '<div class="pf-session-main">' +
+        '<div class="pf-setting-info"><div class="pf-session-title">' + (s.title || s.id) + '</div><div class="pf-session-sub">' + fmtTokens(s.totalTokens) + ' tokens</div></div>' +
+        '<div class="pf-setting-right"><span class="pf-session-cost">' + fmtMoney(s.totalCost) + '</span></div>' +
         '</div><div class="pf-session-detail">' + detail + '</div></div>'
       );
     }
