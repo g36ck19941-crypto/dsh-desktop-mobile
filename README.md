@@ -1,69 +1,79 @@
-# DSH 桌面端 + 手机端
+# DSH Desktop + Mobile
 
-DeepSeek Harness（DSH）的桌面端（Windows）和手机端（Android）应用。
+[English](README.md) · [简体中文](README.zh-CN.md)
 
-## 目录结构
+Desktop (Windows) and mobile (Android) apps for [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) — a self-contained workbench with an embedded terminal, automatic service startup, and phone-to-desktop remote control.
 
-- `installers/` — 安装包
-  - `DSH-Desktop-Setup-0.1.0.exe` — 桌面安装版（安装向导，可选安装目录）
-  - `DSH-Desktop-Portable-0.1.0.exe` — 桌面便携版（免安装，单文件直接运行）
-  - `DSH-Mobile-0.1.0.apk` — 手机端安装包
-- `desktop/` — 桌面端源码（Electron）
-- `android/` — 手机端源码（Android）
-- `scripts/` — 辅助脚本（gzip 压缩代理、一键配置、构建脚本等）
-- `远程遥控说明.md` — 手机远程连接电脑的配置说明
+## Highlights
 
----
+- **Zero command line** — the desktop app auto-starts DSH, the gzip compression proxy, and keeps them healthy.
+- **Four tabs** — DSH workspace, a standalone DeepSeek chat, the DeepSeek Open Platform (in-app), and a personal panel.
+- **Cost tracking** — per-session token usage and cost, with off-peak/peak pricing and cache-hit/miss breakdown.
+- **Phone remote control** — control the desktop DSH from the Android app over Tailscale.
 
-## 一、桌面端
+## Directory layout
 
-### 安装
+- `desktop/` — Electron desktop app (source)
+- `android/` — Android app (source)
+- `installers/` — built installers (Windows .exe / Android .apk)
+- `scripts/` — helper scripts (gzip proxy, one-click setup, build scripts)
+- `远程遥控说明.md` — remote-control setup guide (Chinese)
 
-- **便携版**：双击 `installers/DSH-Desktop-Portable-0.1.0.exe` 即可运行；
-- **安装版**：双击 `installers/DSH-Desktop-Setup-0.1.0.exe`，按向导安装。
+## Desktop (Windows)
 
-### 使用
+### Install
 
-1. 启动后，App 会**自动拉起 dsh 服务**（右上角「日志」可查看内嵌日志面板）；
-2. 状态条变绿显示「已就绪」后即可使用；
-3. 托盘菜单提供：打开工作台 / 在浏览器打开 / 📱手机连接 / 重启服务 / 退出。
+Run the NSIS installer `DSH-Desktop-Setup-<version>.exe` (wizard, selectable install directory).
 
-### 特点
+### Usage
 
-- 全程零命令行：内嵌日志面板 + 自动启动 dsh + 自动起 gzip 压缩代理；
-- 启动时**自动校验 tailscale serve** 配置，漂移自动修复；
-- 一键「📱 手机连接」配置远程遥控（详见 `远程遥控说明.md`）。
+1. Launch the app; it auto-starts the DSH service (logs are in the embedded panel via the top-right "日志" button).
+2. Wait for the green "已就绪" status, then use it.
+3. The tray menu provides: open workbench / open in browser / 📱 phone connection / restart services / quit.
 
----
+### Tabs
 
-## 二、手机端
+- **DSH** — embedded DSH web workspace (auto token auth).
+- **DeepSeek** — standalone streaming chat against the DeepSeek API.
+- **开放平台** — the DeepSeek Open Platform embedded in-app (with a refresh button).
+- **个人** — a ChatGPT-settings-style personal panel:
+  - **概览 (Overview)** — peak/off-peak pricing banner + cost summary.
+  - **消耗明细 (Usage)** — per-session token cost with peak/off-peak & cache breakdown.
+  - **版本更新 (Updates)** — check / one-click update of DSH.
+  - **关于 (About)** — app version info.
 
-### 安装
+### Cost tracking
 
-把 `installers/DSH-Mobile-0.1.0.apk` 传到手机安装（需允许「未知来源」安装）。
+Cost is computed from the real provider usage stored in DSH session logs:
 
-### 两种模式（顶部切换）
+- model-specific pricing history (pre-/post-2026-08-17 price change);
+- Beijing-time off-peak/peak windows (weekdays 09:00–12:00, 14:00–18:00 are peak);
+- cache-hit / cache-miss / output token breakdown;
+- archived sessions are excluded;
+- auto-detects the current session-log format (v0 / v3) by version.
 
-1. **独立对话**：右上角「设置」里填 LLM API（Base URL / API Key / 模型），**不依赖电脑**直接对话；
-2. **远程桌面**：连接电脑上的 dsh，顶部显示「● 在线 / 离线」状态（配置见 `远程遥控说明.md`）。
+## Mobile (Android)
 
----
+### Install
 
-## 三、构建
+Install `DSH-Mobile-<version>.apk` (allow "unknown sources").
 
-- 桌面端：`scripts/build-desktop.ps1`
-- 手机端：先 `scripts/setup-android-sdk.ps1` 安装 SDK，再 `scripts/build-apk.ps1`
+### Two modes (top tabs)
 
----
+1. **独立对话 (Standalone chat)** — fill in your LLM API (Base URL / API Key / model) under settings; works without a computer.
+2. **远程桌面 (Remote desktop)** — connect to the desktop DSH; shows online/offline status.
 
-## 四、远程遥控
+## Build
 
-手机远程连接电脑的完整说明见 [远程遥控说明.md](远程遥控说明.md)。
+- Desktop: `electron-builder --win nsis` (see `重新打包.bat`).
+- Mobile: set up the Android SDK first (`scripts/setup-android-sdk.ps1`), then `scripts/build-apk.ps1`.
 
----
+## Remote control
 
-## 五、版本与许可证
+Phone → Tailscale HTTPS → gzip proxy (3081) → DSH (3080). See `远程遥控说明.md` for the full setup.
 
-- **当前版本**：v0.1.0
-- **版本规范**：遵循[语义化版本](https://semver.org/lang/zh-CN/)，变更记录见 [CHANGELOG.md](CHANGELOG.md)
-- **许可证**：[MIT](LICENSE)
+## Version & license
+
+- **Current version**: v0.5.0
+- **Versioning**: [SemVer](https://semver.org/); changelog in [CHANGELOG.md](CHANGELOG.md)
+- **License**: [MIT](LICENSE)
