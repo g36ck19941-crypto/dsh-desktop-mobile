@@ -446,7 +446,7 @@ ipcMain.handle('dsh-check-update', async () => {
   const local = getLocalDshVersion();
   try {
     const latest = await new Promise((resolve, reject) => {
-      execFile('npm.cmd', ['view', '@deepseek-ai/dsh', 'version'], { timeout: 40000, windowsHide: true }, (err, stdout) => {
+      execFile('cmd.exe', ['/c', 'npm', 'view', '@deepseek-ai/dsh', 'version'], { timeout: 40000, windowsHide: true }, (err, stdout) => {
         if (err) return reject(err);
         const v = (stdout || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean)[0];
         resolve(v || null);
@@ -462,7 +462,7 @@ ipcMain.handle('dsh-update', async () => {
   try {
     // 触发 npx 拉取最新版（下载到新的缓存目录），随后重启 DSH 服务
     await new Promise((resolve, reject) => {
-      execFile('npx.cmd', ['--yes', '@deepseek-ai/dsh@latest', '--version'], { timeout: 180000, windowsHide: true }, (err, stdout, stderr) => {
+      execFile('cmd.exe', ['/c', 'npx', '--yes', '@deepseek-ai/dsh@latest', '--version'], { timeout: 180000, windowsHide: true }, (err, stdout, stderr) => {
         if (err && !(stdout || stderr)) return reject(err);
         resolve(stdout || stderr || '');
       });

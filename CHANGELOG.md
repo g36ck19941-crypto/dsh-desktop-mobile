@@ -4,6 +4,13 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.5.1] - 2026-09-19
+
+### 修复
+- 修复开放平台工具条与网页横向排列（补 flex-direction），刷新按钮归位到顶部。
+- 修复「检查更新 / 一键更新」失败：npm/npx 改经 cmd.exe 启动（Windows 下 .cmd 不能直接 spawn）。
+- 开放平台改为每次进入自动刷新，移除手动刷新按钮。
+
 ## [0.5.0] - 2026-09-19
 
 ### 新增
